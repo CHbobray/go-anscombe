@@ -44,56 +44,50 @@ func regularizedIncompleteBeta(x, a, b float64) float64 {
 
 // betaContinuedFraction evaluates the continued fraction for the incomplete
 // beta function with the modified Lentz method (Press et al., Numerical
-// Recipes, section 6.4).
+// Recipes, section 6.4). Each iteration applies one even and one odd term.
 func betaContinuedFraction(x, a, b float64) float64 {
 	const (
 		maxIterations = 300
 		epsilon       = 1e-15
-		tiny          = 1e-300
 	)
 	c := 1.0
-	d := 1 - (a+b)*x/(a+1)
-	if math.Abs(d) < tiny {
-		d = tiny
-	}
-	d = 1 / d
+	d := 1 / avoidZero(1-(a+b)*x/(a+1))
 	result := d
 
 	for m := 1; m <= maxIterations; m++ {
 		fm := float64(m)
+		evenTerm := fm * (b - fm) * x / ((a + 2*fm - 1) * (a + 2*fm))
+		oddTerm := -(a + fm) * (a + b + fm) * x / ((a + 2*fm) * (a + 2*fm + 1))
 
-		// Even step of the recurrence.
-		numerator := fm * (b - fm) * x / ((a + 2*fm - 1) * (a + 2*fm))
-		d = 1 + numerator*d
-		if math.Abs(d) < tiny {
-			d = tiny
-		}
-		c = 1 + numerator/c
-		if math.Abs(c) < tiny {
-			c = tiny
-		}
-		d = 1 / d
-		result *= d * c
+		var factor float64
+		c, d, factor = lentzStep(evenTerm, c, d)
+		result *= factor
+		c, d, factor = lentzStep(oddTerm, c, d)
+		result *= factor
 
-		// Odd step of the recurrence.
-		numerator = -(a + fm) * (a + b + fm) * x / ((a + 2*fm) * (a + 2*fm + 1))
-		d = 1 + numerator*d
-		if math.Abs(d) < tiny {
-			d = tiny
-		}
-		c = 1 + numerator/c
-		if math.Abs(c) < tiny {
-			c = tiny
-		}
-		d = 1 / d
-		delta := d * c
-		result *= delta
-
-		if math.Abs(delta-1) < epsilon {
+		if math.Abs(factor-1) < epsilon { // converged
 			break
 		}
 	}
 	return result
+}
+
+// lentzStep applies one term of the modified Lentz recurrence, returning the
+// updated c and d and the factor by which the running result changes.
+func lentzStep(term, c, d float64) (newC, newD, factor float64) {
+	newD = 1 / avoidZero(1+term*d)
+	newC = avoidZero(1 + term/c)
+	return newC, newD, newC * newD
+}
+
+// avoidZero replaces a value too close to zero with a tiny one, so the
+// Lentz recurrence never divides by zero.
+func avoidZero(v float64) float64 {
+	const tiny = 1e-300
+	if math.Abs(v) < tiny {
+		return tiny
+	}
+	return v
 }
 
 // CriticalT returns the value c with P(|T| > c) = alpha for Student's t

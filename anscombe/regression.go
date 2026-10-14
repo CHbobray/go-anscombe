@@ -44,60 +44,94 @@ type Result struct {
 
 // Fit runs a simple linear regression of y on x.
 //
-// The fitted line comes from stats.LinearRegression. That function returns
-// fitted points rather than coefficients, so the slope and intercept are
-// recovered from two fitted points with different x values. R-squared uses
-// stats.Correlation, and standard errors use the usual OLS formulas.
+// It works in three steps: check the input, fit the line with the stats
+// package, then compute the inference statistics R's summary(lm()) reports.
 func Fit(x, y []float64) (Result, error) {
-	n := len(x)
-	if n != len(y) {
-		return Result{}, ErrLengthMismatch
+	if err := checkInput(x, y); err != nil {
+		return Result{}, err
 	}
-	if n < 3 {
-		return Result{}, ErrTooFewPoints
-	}
-
-	series := make(stats.Series, n)
-	for i := range x {
-		series[i] = stats.Coordinate{X: x[i], Y: y[i]}
-	}
-
-	fitted, err := stats.LinearRegression(series)
+	intercept, slope, fitted, err := fitLine(x, y)
 	if err != nil {
-		return Result{}, fmt.Errorf("anscombe: linear regression: %w", err)
+		return Result{}, err
 	}
-
-	// Find a point whose x differs from the first one.
-	j := -1
-	for k := 1; k < n; k++ {
-		if x[k] != x[0] {
-			j = k
-			break
-		}
-	}
-	if j < 0 {
-		return Result{}, ErrConstantX
-	}
-
-	slope := (fitted[j].Y - fitted[0].Y) / (fitted[j].X - fitted[0].X)
-	intercept := fitted[0].Y - slope*fitted[0].X
-
 	r, err := stats.Correlation(x, y)
 	if err != nil {
 		return Result{}, fmt.Errorf("anscombe: correlation: %w", err)
 	}
+	return summarize(x, y, fitted, intercept, slope, r*r), nil
+}
 
+// checkInput rejects data that cannot support a regression line.
+func checkInput(x, y []float64) error {
+	switch {
+	case len(x) != len(y):
+		return ErrLengthMismatch
+	case len(x) < 3:
+		return ErrTooFewPoints
+	case allEqual(x):
+		return ErrConstantX
+	}
+	return nil
+}
+
+// allEqual reports whether every value in v equals the first one.
+func allEqual(v []float64) bool {
+	for _, value := range v[1:] {
+		if value != v[0] {
+			return false
+		}
+	}
+	return true
+}
+
+// fitLine gets the least squares line, and the fitted point for each
+// observation, from stats.LinearRegression.
+//
+// That function returns fitted points rather than coefficients, so the slope
+// is recovered from two fitted points with different x values, and the
+// intercept from where the line crosses x = 0. checkInput guarantees such a
+// pair of points exists.
+func fitLine(x, y []float64) (intercept, slope float64, fitted stats.Series, err error) {
+	series := make(stats.Series, len(x))
+	for i := range x {
+		series[i] = stats.Coordinate{X: x[i], Y: y[i]}
+	}
+	line, err := stats.LinearRegression(series)
+	if err != nil {
+		return 0, 0, nil, fmt.Errorf("anscombe: linear regression: %w", err)
+	}
+
+	first, other := line[0], line[indexOfDifferentX(x)]
+	slope = (other.Y - first.Y) / (other.X - first.X)
+	intercept = first.Y - slope*first.X
+	return intercept, slope, line, nil
+}
+
+// indexOfDifferentX returns the index of the first x that differs from x[0].
+func indexOfDifferentX(x []float64) int {
+	for i, value := range x {
+		if value != x[0] {
+			return i
+		}
+	}
+	return 0 // unreachable after checkInput
+}
+
+// summarize computes standard errors, t and F statistics, and p-values with
+// the textbook OLS formulas for one predictor.
+func summarize(x, y []float64, fitted stats.Series, intercept, slope, rSquared float64) Result {
+	n := len(x)
+	df := n - 2
 	meanX, _ := stats.Mean(x)
 	meanY, _ := stats.Mean(y)
 	popVarX, _ := stats.PopulationVariance(x)
 	sxx := popVarX * float64(n) // sum of squared deviations of x
 
-	var sse float64
+	var sse float64 // sum of squared residuals
 	for i := range y {
-		resid := y[i] - fitted[i].Y
-		sse += resid * resid
+		residual := y[i] - fitted[i].Y
+		sse += residual * residual
 	}
-	df := n - 2
 	sigma := math.Sqrt(sse / float64(df))
 	slopeSE := sigma / math.Sqrt(sxx)
 	interceptSE := sigma * math.Sqrt(1/float64(n)+meanX*meanX/sxx)
@@ -105,7 +139,6 @@ func Fit(x, y []float64) (Result, error) {
 	slopeT := slope / slopeSE
 	interceptT := intercept / interceptSE
 	slopeP := TwoSidedPValue(slopeT, df)
-	rSquared := r * r
 
 	return Result{
 		N:           n,
@@ -123,7 +156,7 @@ func Fit(x, y []float64) (Result, error) {
 		ResidualSE:  sigma,
 		RSquared:    rSquared,
 		AdjRSquared: 1 - (1-rSquared)*float64(n-1)/float64(df),
-		FStatistic:  slopeT * slopeT,
+		FStatistic:  slopeT * slopeT, // with one predictor, F = t^2
 		FPValue:     slopeP,
-	}, nil
+	}
 }

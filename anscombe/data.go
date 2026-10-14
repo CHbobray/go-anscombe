@@ -39,6 +39,7 @@ func Quartet() []DataSet {
 	}
 }
 
+// copyOf returns a new slice with the same values as v.
 func copyOf(v []float64) []float64 {
 	out := make([]float64, len(v))
 	copy(out, v)

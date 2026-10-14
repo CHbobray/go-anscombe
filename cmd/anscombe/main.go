@@ -61,6 +61,8 @@ const (
 	mcSigma     = 1.24
 )
 
+// main parses the options, runs the program and reports any error in plain
+// language, exiting with status 1 on failure.
 func main() {
 	opts, err := parseFlags(os.Args[1:])
 	if err == nil {
@@ -160,6 +162,7 @@ func runWithExtras(stdout io.Writer, o options) error {
 	return err
 }
 
+// writeMemProfile saves a heap profile of the run to path.
 func writeMemProfile(path string) error {
 	f, err := os.Create(path)
 	if err != nil {

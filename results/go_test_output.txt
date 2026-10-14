@@ -45,8 +45,8 @@
 === RUN   ExampleFit
 --- PASS: ExampleFit (0.00s)
 PASS
-coverage: 95.2% of statements
-ok  	github.com/CHbobray/go-anscombe/anscombe	0.025s	coverage: 95.2% of statements
+coverage: 96.4% of statements
+ok  	github.com/CHbobray/go-anscombe/anscombe	0.014s	coverage: 96.4% of statements
 === RUN   TestRunQuartet
 --- PASS: TestRunQuartet (0.00s)
 === RUN   TestRunCSVMatchesBuiltInSet
@@ -58,8 +58,9 @@ ok  	github.com/CHbobray/go-anscombe/anscombe	0.025s	coverage: 95.2% of statemen
 === RUN   TestRunMonteCarlo
 --- PASS: TestRunMonteCarlo (0.01s)
 === RUN   TestLogAndProfilesAreWritten
---- PASS: TestLogAndProfilesAreWritten (0.21s)
+--- PASS: TestLogAndProfilesAreWritten (0.20s)
 === RUN   TestParseFlagsRejectsBadInput
+=== RUN   TestParseFlagsRejectsBadInput/sample_too_small
 === RUN   TestParseFlagsRejectsBadInput/stray_argument
 === RUN   TestParseFlagsRejectsBadInput/unknown_flag
 flag provided but not defined: -speed
@@ -114,27 +115,26 @@ Options:
   -svg string
     	draw a scatter plot of each data set with its fitted line to this SVG file
 === RUN   TestParseFlagsRejectsBadInput/negative_mc
-=== RUN   TestParseFlagsRejectsBadInput/sample_too_small
 --- PASS: TestParseFlagsRejectsBadInput (0.00s)
+    --- PASS: TestParseFlagsRejectsBadInput/sample_too_small (0.00s)
     --- PASS: TestParseFlagsRejectsBadInput/stray_argument (0.00s)
     --- PASS: TestParseFlagsRejectsBadInput/unknown_flag (0.00s)
     --- PASS: TestParseFlagsRejectsBadInput/unknown_data_set (0.00s)
     --- PASS: TestParseFlagsRejectsBadInput/negative_reps (0.00s)
     --- PASS: TestParseFlagsRejectsBadInput/non-number_reps (0.00s)
     --- PASS: TestParseFlagsRejectsBadInput/negative_mc (0.00s)
-    --- PASS: TestParseFlagsRejectsBadInput/sample_too_small (0.00s)
 === RUN   TestRunRejectsBadFiles
-=== RUN   TestRunRejectsBadFiles/too_few_rows
-=== RUN   TestRunRejectsBadFiles/constant_x
 === RUN   TestRunRejectsBadFiles/missing_file
 === RUN   TestRunRejectsBadFiles/non-numeric
 === RUN   TestRunRejectsBadFiles/one_column
+=== RUN   TestRunRejectsBadFiles/too_few_rows
+=== RUN   TestRunRejectsBadFiles/constant_x
 --- PASS: TestRunRejectsBadFiles (0.00s)
-    --- PASS: TestRunRejectsBadFiles/too_few_rows (0.00s)
-    --- PASS: TestRunRejectsBadFiles/constant_x (0.00s)
     --- PASS: TestRunRejectsBadFiles/missing_file (0.00s)
     --- PASS: TestRunRejectsBadFiles/non-numeric (0.00s)
     --- PASS: TestRunRejectsBadFiles/one_column (0.00s)
+    --- PASS: TestRunRejectsBadFiles/too_few_rows (0.00s)
+    --- PASS: TestRunRejectsBadFiles/constant_x (0.00s)
 PASS
 coverage: 86.6% of statements
-ok  	github.com/CHbobray/go-anscombe/cmd/anscombe	0.223s	coverage: 86.6% of statements
+ok  	github.com/CHbobray/go-anscombe/cmd/anscombe	0.221s	coverage: 86.6% of statements

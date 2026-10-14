@@ -313,7 +313,7 @@ Miller's original programs are included unchanged (`make miller` runs them from 
 | `TestLogAndProfilesAreWritten` | `-log`, `-cpuprofile` and `-memprofile` produce their files |
 | `TestParseFlagsRejectsBadInput`, `TestRunRejectsBadFiles` | Every kind of bad option and bad CSV is rejected with an error |
 
-Coverage: 95.2% of the `anscombe` package and 86.6% of the application. The uncovered part is `main`'s exit handling and the Windows "Press Enter" pause. Full output: `results/go_test_output.txt`.
+Coverage: 96.4% of the `anscombe` package and 86.6% of the application. The uncovered part is `main`'s exit handling and the Windows "Press Enter" pause. Full output: `results/go_test_output.txt`.
 
 ## References
 
