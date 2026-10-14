@@ -1,0 +1,16 @@
+File: anscombe (profile of: anscombe -reps 100000 -mc 100000)
+Build ID: 69f3828083f78657962fe7ff522d8f240478d3d4
+Type: alloc_space
+Time: 2026-10-13 20:20:34 CDT
+Showing nodes accounting for 968.96MB, 99.78% of 971.12MB total
+Dropped 10 nodes (cum <= 4.86MB)
+      flat  flat%   sum%        cum   cum%
+  551.52MB 56.79% 56.79%   551.52MB 56.79%  github.com/montanaflynn/stats.LinearRegression
+  234.78MB 24.18% 80.97%   786.30MB 80.97%  github.com/CHbobray/go-anscombe/anscombe.Fit
+  182.66MB 18.81% 99.78%   182.66MB 18.81%  github.com/CHbobray/go-anscombe/anscombe.Synthetic
+         0     0% 99.78%   970.12MB 99.90%  main.main
+         0     0% 99.78%   719.42MB 74.08%  main.monteCarlo
+         0     0% 99.78%   968.96MB 99.78%  main.run
+         0     0% 99.78%   970.12MB 99.90%  main.runWithExtras
+         0     0% 99.78%   249.54MB 25.70%  main.timeFits
+         0     0% 99.78%   970.62MB 99.95%  runtime.main

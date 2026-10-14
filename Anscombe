@@ -1,0 +1,11 @@
+#!/bin/sh
+# Launcher for the Anscombe regression program. The program prints its
+# results as text, so this opens it in a Terminal window, choosing the
+# build that matches the Mac's processor (Apple silicon or Intel).
+RES="$(cd "$(dirname "$0")/../Resources" && pwd)"
+case "$(uname -m)" in
+  arm64) BIN="$RES/anscombe-darwin-arm64" ;;
+  *)     BIN="$RES/anscombe-darwin-amd64" ;;
+esac
+chmod +x "$BIN" 2>/dev/null
+open -a Terminal "$BIN"

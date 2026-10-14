@@ -1,0 +1,12 @@
+Set           Intercept        Slope       Int SE     Slope SE        R^2
+Set I          3.000091     0.500091     1.124747     0.117906   0.666542
+Set II         3.000909     0.500000     1.125302     0.117964   0.666242
+Set III        3.002455     0.499727     1.124481     0.117878   0.666324
+Set IV         3.001727     0.499909     1.123921     0.117819   0.666707
+
+Go: 100000 reps x 4 sets in 0.289 s (0.72 microseconds per fit)
+Memory: 672 bytes and 6.0 allocations per fit; heap in use 4.22 MB; 12.7 MB obtained from OS
+
+Monte Carlo: 100000 samples of n = 100 from y = 3.0 + 0.5x + N(0, 1.24^2), seed 1
+  mean slope 0.50012 (true 0.5), SD 0.04341, 95% CI coverage 95.0%
+  Go: 0.766 s total (7.66 microseconds per simulate + fit)

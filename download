@@ -1,0 +1,6 @@
+__pycache__/
+*.pyc
+.Rhistory
+.DS_Store
+*.prof
+*.log
