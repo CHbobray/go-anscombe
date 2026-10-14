@@ -1,7 +1,9 @@
 // Command anscombe fits a simple linear regression to each Anscombe Quartet
 // data set (or to a CSV file of x,y pairs), prints the results, and times
 // repeated fits so Go can be compared with Python and R. It can also run a
-// Monte Carlo benchmark on synthetic data, write a log, and save profiles.
+// Monte Carlo benchmark on synthetic data, draw an SVG plot, write a log,
+// and save profiles. The regression summary mirrors R's summary(lm()) and
+// statsmodels' OLS summary from Miller's (2015) chapter 1 programs.
 //
 // Usage:
 //
@@ -9,6 +11,8 @@
 //	                               and run 10,000 Monte Carlo simulations
 //	anscombe -reps 100000          choose the number of timing repetitions
 //	anscombe -csv data.csv         fit your own data (two numeric columns: x,y)
+//	anscombe -data duet            use the duet (two different sets, same fit)
+//	anscombe -svg plot.svg         also draw the data and fitted lines
 //	anscombe -mc 10000 -n 100      Monte Carlo benchmark on synthetic data
 //	anscombe -log run.log          also write a log of the run
 //	anscombe -cpuprofile cpu.prof  save CPU and/or memory profiles (-memprofile)
@@ -39,6 +43,8 @@ import (
 type options struct {
 	reps       int
 	csvPath    string
+	dataName   string
+	svgPath    string
 	mcRuns     int
 	mcSize     int
 	seed       int64
@@ -82,6 +88,8 @@ func parseFlags(args []string) (options, error) {
 	fs := flag.NewFlagSet("anscombe", flag.ContinueOnError)
 	fs.IntVar(&o.reps, "reps", 10000, "number of times to repeat the fits for timing (0 skips timing)")
 	fs.StringVar(&o.csvPath, "csv", "", "optional CSV file with two numeric columns (x,y); a header row is allowed")
+	fs.StringVar(&o.dataName, "data", "quartet", "built-in data to fit when -csv is not given: quartet or duet")
+	fs.StringVar(&o.svgPath, "svg", "", "draw a scatter plot of each data set with its fitted line to this SVG file")
 	fs.IntVar(&o.mcRuns, "mc", 10000, "number of Monte Carlo simulations on synthetic data (0 skips the simulation)")
 	fs.IntVar(&o.mcSize, "n", 100, "observations per Monte Carlo sample (at least 3)")
 	fs.Int64Var(&o.seed, "seed", 1, "random seed for the Monte Carlo simulation, so results can be repeated")
@@ -105,6 +113,8 @@ func parseFlags(args []string) (options, error) {
 		return o, errors.New("-mc must be zero or more")
 	case o.mcSize < 3:
 		return o, errors.New("-n must be at least 3 (a regression line needs three points to estimate its error)")
+	case o.dataName != "quartet" && o.dataName != "duet":
+		return o, fmt.Errorf("-data must be quartet or duet, not %q", o.dataName)
 	}
 	return o, nil
 }
@@ -166,6 +176,9 @@ func writeMemProfile(path string) error {
 // run does the program's work: fit, time, and optionally simulate.
 func run(w io.Writer, logger *log.Logger, o options) error {
 	sets := anscombe.Quartet()
+	if o.dataName == "duet" {
+		sets = anscombe.Duet()
+	}
 	if o.csvPath != "" {
 		ds, err := readCSV(o.csvPath)
 		if err != nil {
@@ -178,6 +191,13 @@ func run(w io.Writer, logger *log.Logger, o options) error {
 	if err := printFits(w, logger, sets); err != nil {
 		return err
 	}
+	if o.svgPath != "" {
+		if err := writePlot(o.svgPath, sets); err != nil {
+			return err
+		}
+		fmt.Fprintf(w, "\nPlot written to %s (open it in any web browser)\n", o.svgPath)
+		logger.Printf("plot: %s", o.svgPath)
+	}
 	if o.reps > 0 {
 		if err := timeFits(w, logger, sets, o.reps); err != nil {
 			return err
@@ -189,18 +209,79 @@ func run(w io.Writer, logger *log.Logger, o options) error {
 	return nil
 }
 
+// printFits prints a regression summary for each data set, laid out like
+// R's summary(lm(y ~ x)), then a side-by-side table that shows how alike
+// the fitted models are.
 func printFits(w io.Writer, logger *log.Logger, sets []anscombe.DataSet) error {
-	fmt.Fprintf(w, "%-10s %12s %12s %12s %12s %10s\n", "Set", "Intercept", "Slope", "Int SE", "Slope SE", "R^2")
-	for _, ds := range sets {
+	results := make([]anscombe.Result, len(sets))
+	for i, ds := range sets {
 		r, err := anscombe.Fit(ds.X, ds.Y)
 		if err != nil {
 			return fmt.Errorf("%s: %w", ds.Name, err)
 		}
-		fmt.Fprintf(w, "%-10s %12.6f %12.6f %12.6f %12.6f %10.6f\n",
-			ds.Name, r.Intercept, r.Slope, r.InterceptSE, r.SlopeSE, r.RSquared)
+		results[i] = r
+		printSummary(w, ds.Name, r)
 		logger.Printf("fit %s: intercept %.6f, slope %.6f, R^2 %.6f", ds.Name, r.Intercept, r.Slope, r.RSquared)
 	}
+
+	fmt.Fprintf(w, "Side by side\n")
+	fmt.Fprintf(w, "%-10s %8s %8s %12s %12s %12s %12s %10s\n",
+		"Set", "Mean x", "Mean y", "Intercept", "Slope", "Int SE", "Slope SE", "R^2")
+	for i, r := range results {
+		fmt.Fprintf(w, "%-10s %8.3f %8.3f %12.6f %12.6f %12.6f %12.6f %10.6f\n",
+			sets[i].Name, r.MeanX, r.MeanY, r.Intercept, r.Slope, r.InterceptSE, r.SlopeSE, r.RSquared)
+	}
 	return nil
+}
+
+// printSummary writes one regression summary in the style of R's
+// summary(lm(y ~ x)), adding the 95% confidence intervals that
+// statsmodels' summary() reports.
+func printSummary(w io.Writer, name string, r anscombe.Result) {
+	tCrit := anscombe.CriticalT(0.05, r.DF)
+	fmt.Fprintf(w, "%s: y = %.4f + %.4fx   (n = %d, mean x = %.3f, mean y = %.3f)\n",
+		name, r.Intercept, r.Slope, r.N, r.MeanX, r.MeanY)
+	fmt.Fprintf(w, "              Estimate  Std. Error   t value   Pr(>|t|)       95%% confidence interval\n")
+	fmt.Fprintf(w, "(Intercept) %10.4f %11.4f %9.3f %10.5f %-3s  [%8.4f, %8.4f]\n",
+		r.Intercept, r.InterceptSE, r.InterceptT, r.InterceptP, stars(r.InterceptP),
+		r.Intercept-tCrit*r.InterceptSE, r.Intercept+tCrit*r.InterceptSE)
+	fmt.Fprintf(w, "x           %10.4f %11.4f %9.3f %10.5f %-3s  [%8.4f, %8.4f]\n",
+		r.Slope, r.SlopeSE, r.SlopeT, r.SlopeP, stars(r.SlopeP),
+		r.Slope-tCrit*r.SlopeSE, r.Slope+tCrit*r.SlopeSE)
+	fmt.Fprintf(w, "Residual standard error: %.3f on %d degrees of freedom\n", r.ResidualSE, r.DF)
+	fmt.Fprintf(w, "Multiple R-squared: %.4f,  Adjusted R-squared: %.4f\n", r.RSquared, r.AdjRSquared)
+	fmt.Fprintf(w, "F-statistic: %.2f on 1 and %d DF,  p-value: %.5f\n", r.FStatistic, r.DF, r.FPValue)
+	fmt.Fprintf(w, "Signif. codes: *** < 0.001, ** < 0.01, * < 0.05, . < 0.1\n\n")
+}
+
+// stars returns R's significance codes: *** p < 0.001, ** p < 0.01,
+// * p < 0.05, . p < 0.1.
+func stars(p float64) string {
+	switch {
+	case p < 0.001:
+		return "***"
+	case p < 0.01:
+		return "**"
+	case p < 0.05:
+		return "*"
+	case p < 0.1:
+		return "."
+	default:
+		return ""
+	}
+}
+
+// writePlot saves the SVG scatter plots to path.
+func writePlot(path string, sets []anscombe.DataSet) error {
+	f, err := os.Create(path)
+	if err != nil {
+		return fmt.Errorf("creating plot file: %w", err)
+	}
+	if err := anscombe.WriteSVG(f, sets); err != nil {
+		f.Close()
+		return fmt.Errorf("drawing plot: %w", err)
+	}
+	return f.Close()
 }
 
 // timeFits fits every set reps times and reports time and memory per fit.
@@ -236,7 +317,7 @@ func timeFits(w io.Writer, logger *log.Logger, sets []anscombe.DataSet, reps int
 // and reports how well the estimates recover the truth and how long it took.
 func monteCarlo(w io.Writer, logger *log.Logger, o options) error {
 	rng := rand.New(rand.NewSource(o.seed))
-	tCrit := tCritical95(o.mcSize - 2)
+	tCrit := anscombe.CriticalT(0.05, o.mcSize-2)
 
 	var sumSlope, sumSqSlope float64
 	covered := 0
@@ -268,19 +349,6 @@ func monteCarlo(w io.Writer, logger *log.Logger, o options) error {
 	logger.Printf("monte carlo: %d runs, n=%d, mean slope %.5f, coverage %.3f, %.2f us/run",
 		o.mcRuns, o.mcSize, meanSlope, float64(covered)/runs, perRun)
 	return nil
-}
-
-// tCritical95 returns the two-sided 95% critical value of Student's t.
-// It uses exact table values for small df and the normal approximation
-// with a Cornish-Fisher correction above that (error under 0.003).
-func tCritical95(df int) float64 {
-	table := []float64{0, 12.706, 4.303, 3.182, 2.776, 2.571, 2.447, 2.365, 2.306, 2.262, 2.228}
-	if df < len(table) {
-		return table[df]
-	}
-	const z = 1.959964
-	d := float64(df)
-	return z + (z*z*z+z)/(4*d) + (5*math.Pow(z, 5)+16*z*z*z+3*z)/(96*d*d)
 }
 
 // readCSV loads two numeric columns from a CSV file. A first row that does

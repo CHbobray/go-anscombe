@@ -1,10 +1,10 @@
-2026/10/13 20:20:33.065134 start: go go1.24.7 linux/amd64, 2 CPUs, options {reps:100000 csvPath: mcRuns:100000 mcSize:100 seed:1 logPath:results/go_run_log.txt cpuProfile:cpu.prof memProfile:mem.prof}
-2026/10/13 20:20:33.065820 CPU profile: cpu.prof
-2026/10/13 20:20:33.065851 fit Set I: intercept 3.000091, slope 0.500091, R^2 0.666542
-2026/10/13 20:20:33.065856 fit Set II: intercept 3.000909, slope 0.500000, R^2 0.666242
-2026/10/13 20:20:33.065861 fit Set III: intercept 3.002455, slope 0.499727, R^2 0.666324
-2026/10/13 20:20:33.065865 fit Set IV: intercept 3.001727, slope 0.499909, R^2 0.666707
-2026/10/13 20:20:33.355991 timing: 400000 fits in 288.630147ms (0.72 us/fit)
-2026/10/13 20:20:34.122119 monte carlo: 100000 runs, n=100, mean slope 0.50012, coverage 0.950, 7.66 us/run
-2026/10/13 20:20:34.122913 memory profile: mem.prof
-2026/10/13 20:20:34.122917 finished successfully
+2026/10/13 20:48:17.323603 start: go go1.24.7 linux/amd64, 2 CPUs, options {reps:100000 csvPath: dataName:quartet svgPath: mcRuns:100000 mcSize:100 seed:1 logPath:results/go_run_log.txt cpuProfile:cpu.prof memProfile:mem.prof}
+2026/10/13 20:48:17.323971 CPU profile: cpu.prof
+2026/10/13 20:48:17.324047 fit Set I: intercept 3.000091, slope 0.500091, R^2 0.666542
+2026/10/13 20:48:17.324091 fit Set II: intercept 3.000909, slope 0.500000, R^2 0.666242
+2026/10/13 20:48:17.324131 fit Set III: intercept 3.002455, slope 0.499727, R^2 0.666324
+2026/10/13 20:48:17.324210 fit Set IV: intercept 3.001727, slope 0.499909, R^2 0.666707
+2026/10/13 20:48:17.866284 timing: 400000 fits in 540.924616ms (1.35 us/fit)
+2026/10/13 20:48:18.627406 monte carlo: 100000 runs, n=100, mean slope 0.50012, coverage 0.950, 7.61 us/run
+2026/10/13 20:48:18.629195 memory profile: mem.prof
+2026/10/13 20:48:18.629204 finished successfully

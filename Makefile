@@ -1,6 +1,6 @@
 # Common tasks. On Windows without make, run the go commands directly (see README).
 
-.PHONY: test bench run build app compare profile clean
+.PHONY: test bench run plots build app compare programs miller profile clean
 
 test:
 	go vet ./...
@@ -11,6 +11,11 @@ bench:
 
 run:
 	go run ./cmd/anscombe
+
+# Draw the quartet and the duet as SVG scatter plots with fitted lines.
+plots:
+	go run ./cmd/anscombe -reps 0 -mc 0 -svg results/anscombe_quartet.svg
+	go run ./cmd/anscombe -reps 0 -mc 0 -data duet -svg results/duet.svg
 
 # Build stand-alone executables for Windows, macOS (Apple silicon and Intel) and Linux.
 build:
@@ -29,11 +34,21 @@ app: build
 	chmod +x bin/Anscombe.app/Contents/MacOS/Anscombe bin/Anscombe.app/Contents/Resources/*
 	cd bin && zip -qry Anscombe-macOS.zip Anscombe.app && rm -rf Anscombe.app
 
-# Run all three languages one after another for a timing comparison.
+# Time the regression code and the Monte Carlo benchmark in all three languages.
 compare:
 	go run ./cmd/anscombe -reps 100000 -mc 100000
-	python3 python/anscombe_regression.py 1000 100000
-	Rscript r/anscombe_regression.R 10000 100000
+	python3 python/anscombe_benchmark.py 1000 100000
+	Rscript r/anscombe_benchmark.R 10000 100000
+
+# Time Miller's complete Python and R programs against the Go program.
+programs: build
+	python3 benchmark/compare_programs.py 20
+
+# Run Miller's (2015) original chapter 1 programs, unchanged (plots included).
+# Note: the Python original's savefig() call fails on matplotlib 3.8 and later.
+miller:
+	cd python && python3 miller-mtpa-chapter-1-program.py
+	cd r && Rscript miller-mtpa-chapter-1-program.R
 
 # Write a log plus CPU and memory profiles, then show the top CPU users.
 profile:
@@ -41,4 +56,4 @@ profile:
 	go tool pprof -top -nodecount=10 cpu.prof
 
 clean:
-	rm -rf bin/Anscombe.app run.log cpu.prof mem.prof
+	rm -rf bin/Anscombe.app run.log cpu.prof mem.prof python/fig_anscombe_Python.pdf r/fig_anscombe_R.pdf

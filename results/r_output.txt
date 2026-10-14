@@ -4,10 +4,10 @@ Set II       3.000909     0.500000     1.125302     0.117964   0.666242
 Set III      3.002455     0.499727     1.124481     0.117878   0.666324
 Set IV       3.001727     0.499909     1.123921     0.117819   0.666707
 
-R lm(): 10000 reps x 4 sets in 25.095 s (627.38 microseconds per fit)
-R .lm.fit(): 100000 reps x 4 sets in 1.286 s (3.22 microseconds per fit)
+R lm() (Miller's code, with summary()): 10000 reps x 4 sets in 26.118 s (652.95 microseconds per fit)
+R .lm.fit(): 100000 reps x 4 sets in 1.250 s (3.12 microseconds per fit)
 
 Monte Carlo: 100000 samples of n = 100 from y = 3 + 0.5x + N(0, 1.24^2)
   mean slope 0.50010 (true 0.5), SD 0.04334, 95% CI coverage 95.0%
-  R: 2.629 s total (26.29 microseconds per simulate + fit)
-Memory: peak R heap during timing 72.5 MB (gc 'max used', Ncells + Vcells)
+  R: 2.667 s total (26.67 microseconds per simulate + fit)
+Memory: peak R heap 72.4 MB (gc 'max used', Ncells + Vcells)

@@ -8,13 +8,25 @@ import (
 )
 
 // rReference holds summary(lm(y ~ x)) output from R 4.3.3 for each Anscombe
-// set, printed to 12 decimals. Python statsmodels OLS gives the same values
-// (see python/anscombe_regression.py).
+// set, printed to 12 decimals (p-values to 12 significant digits).
+// Python statsmodels OLS gives the same values (see the python folder).
 var rReference = []Result{
-	{N: 11, Intercept: 3.000090909091, Slope: 0.500090909091, InterceptSE: 1.124746790809, SlopeSE: 0.117905500596, SlopeT: 4.241455288893, RSquared: 0.666542459509, ResidualSE: 1.236603322726},
-	{N: 11, Intercept: 3.000909090909, Slope: 0.500000000000, InterceptSE: 1.125302416245, SlopeSE: 0.117963745968, SlopeT: 4.238590389772, RSquared: 0.666242033727, ResidualSE: 1.237214205342},
-	{N: 11, Intercept: 3.002454545455, Slope: 0.499727272727, InterceptSE: 1.124481229640, SlopeSE: 0.117877662221, SlopeT: 4.239372102497, RSquared: 0.666324041067, ResidualSE: 1.236311351390},
-	{N: 11, Intercept: 3.001727272727, Slope: 0.499909090909, InterceptSE: 1.123921071854, SlopeSE: 0.117818941730, SlopeT: 4.243028188592, RSquared: 0.666707256898, ResidualSE: 1.235695485681},
+	{N: 11, DF: 9, MeanX: 9.000000000000, MeanY: 7.500909090909,
+		Intercept: 3.000090909091, InterceptSE: 1.124746790809, InterceptT: 2.667347827624, InterceptP: 0.0257340513992,
+		Slope: 0.500090909091, SlopeSE: 0.117905500596, SlopeT: 4.241455288893, SlopeP: 0.00216962887308,
+		ResidualSE: 1.236603322726, RSquared: 0.666542459509, AdjRSquared: 0.629491621676, FStatistic: 17.989942967677, FPValue: 0.00216962887308},
+	{N: 11, DF: 9, MeanX: 9.000000000000, MeanY: 7.500909090909,
+		Intercept: 3.000909090909, InterceptSE: 1.125302416245, InterceptT: 2.666757884447, InterceptP: 0.0257589410308,
+		Slope: 0.500000000000, SlopeSE: 0.117963745968, SlopeT: 4.238590389772, SlopeP: 0.00217881623691,
+		ResidualSE: 1.237214205342, RSquared: 0.666242033727, AdjRSquared: 0.629157815253, FStatistic: 17.965648492271, FPValue: 0.00217881623691},
+	{N: 11, DF: 9, MeanX: 9.000000000000, MeanY: 7.500000000000,
+		Intercept: 3.002454545455, InterceptSE: 1.124481229640, InterceptT: 2.670079736605, InterceptP: 0.0256191088395,
+		Slope: 0.499727272727, SlopeSE: 0.117877662221, SlopeT: 4.239372102497, SlopeP: 0.00217630527923,
+		ResidualSE: 1.236311351390, RSquared: 0.666324041067, AdjRSquared: 0.629248934518, FStatistic: 17.972275823429, FPValue: 0.00217630527923},
+	{N: 11, DF: 9, MeanX: 9.000000000000, MeanY: 7.500909090909,
+		Intercept: 3.001727272727, InterceptSE: 1.123921071854, InterceptT: 2.670763408480, InterceptP: 0.0255904252008,
+		Slope: 0.499909090909, SlopeSE: 0.117818941730, SlopeT: 4.243028188592, SlopeP: 0.0021646023472,
+		ResidualSE: 1.235695485681, RSquared: 0.666707256898, AdjRSquared: 0.629674729887, FStatistic: 18.003288209183, FPValue: 0.0021646023472},
 }
 
 // tolerance allows for the 12-decimal rounding of the reference values and
@@ -32,20 +44,28 @@ func TestFitMatchesR(t *testing.T) {
 			if err != nil {
 				t.Fatalf("Fit returned error: %v", err)
 			}
-			if got.N != want.N {
-				t.Errorf("N = %d, want %d", got.N, want.N)
+			if got.N != want.N || got.DF != want.DF {
+				t.Errorf("N, DF = %d, %d; want %d, %d", got.N, got.DF, want.N, want.DF)
 			}
 			checks := []struct {
 				name      string
 				got, want float64
 			}{
+				{"MeanX", got.MeanX, want.MeanX},
+				{"MeanY", got.MeanY, want.MeanY},
 				{"Intercept", got.Intercept, want.Intercept},
-				{"Slope", got.Slope, want.Slope},
 				{"InterceptSE", got.InterceptSE, want.InterceptSE},
+				{"InterceptT", got.InterceptT, want.InterceptT},
+				{"InterceptP", got.InterceptP, want.InterceptP},
+				{"Slope", got.Slope, want.Slope},
 				{"SlopeSE", got.SlopeSE, want.SlopeSE},
 				{"SlopeT", got.SlopeT, want.SlopeT},
-				{"RSquared", got.RSquared, want.RSquared},
+				{"SlopeP", got.SlopeP, want.SlopeP},
 				{"ResidualSE", got.ResidualSE, want.ResidualSE},
+				{"RSquared", got.RSquared, want.RSquared},
+				{"AdjRSquared", got.AdjRSquared, want.AdjRSquared},
+				{"FStatistic", got.FStatistic, want.FStatistic},
+				{"FPValue", got.FPValue, want.FPValue},
 			}
 			for _, c := range checks {
 				if !near(c.got, c.want) {
@@ -56,14 +76,18 @@ func TestFitMatchesR(t *testing.T) {
 	}
 }
 
-// TestQuartetLesson confirms Anscombe's point: the four sets are visibly
-// different yet give practically the same line (about y = 3.00 + 0.500x)
-// and R-squared (about 0.67).
+// TestQuartetLesson confirms the summary Miller (2015, 9) gives for the
+// quartet: in every set the mean of x is 9, the mean of y is 7.5, the fitted
+// line is y = 3 + 0.5x, and R-squared is 0.67, even though the plotted data
+// look nothing alike.
 func TestQuartetLesson(t *testing.T) {
 	for _, ds := range Quartet() {
 		got, err := Fit(ds.X, ds.Y)
 		if err != nil {
 			t.Fatalf("%s: %v", ds.Name, err)
+		}
+		if got.MeanX != 9 || math.Abs(got.MeanY-7.5) > 0.001 {
+			t.Errorf("%s: means x = %.4f, y = %.4f; want 9 and 7.5", ds.Name, got.MeanX, got.MeanY)
 		}
 		if math.Abs(got.Intercept-3.00) > 0.005 ||
 			math.Abs(got.Slope-0.500) > 0.001 ||

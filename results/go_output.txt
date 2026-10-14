@@ -1,12 +1,49 @@
-Set           Intercept        Slope       Int SE     Slope SE        R^2
-Set I          3.000091     0.500091     1.124747     0.117906   0.666542
-Set II         3.000909     0.500000     1.125302     0.117964   0.666242
-Set III        3.002455     0.499727     1.124481     0.117878   0.666324
-Set IV         3.001727     0.499909     1.123921     0.117819   0.666707
+Set I: y = 3.0001 + 0.5001x   (n = 11, mean x = 9.000, mean y = 7.501)
+              Estimate  Std. Error   t value   Pr(>|t|)       95% confidence interval
+(Intercept)     3.0001      1.1247     2.667    0.02573 *    [  0.4557,   5.5444]
+x               0.5001      0.1179     4.241    0.00217 **   [  0.2334,   0.7668]
+Residual standard error: 1.237 on 9 degrees of freedom
+Multiple R-squared: 0.6665,  Adjusted R-squared: 0.6295
+F-statistic: 17.99 on 1 and 9 DF,  p-value: 0.00217
+Signif. codes: *** < 0.001, ** < 0.01, * < 0.05, . < 0.1
 
-Go: 100000 reps x 4 sets in 0.289 s (0.72 microseconds per fit)
-Memory: 672 bytes and 6.0 allocations per fit; heap in use 4.22 MB; 12.7 MB obtained from OS
+Set II: y = 3.0009 + 0.5000x   (n = 11, mean x = 9.000, mean y = 7.501)
+              Estimate  Std. Error   t value   Pr(>|t|)       95% confidence interval
+(Intercept)     3.0009      1.1253     2.667    0.02576 *    [  0.4553,   5.5465]
+x               0.5000      0.1180     4.239    0.00218 **   [  0.2331,   0.7669]
+Residual standard error: 1.237 on 9 degrees of freedom
+Multiple R-squared: 0.6662,  Adjusted R-squared: 0.6292
+F-statistic: 17.97 on 1 and 9 DF,  p-value: 0.00218
+Signif. codes: *** < 0.001, ** < 0.01, * < 0.05, . < 0.1
+
+Set III: y = 3.0025 + 0.4997x   (n = 11, mean x = 9.000, mean y = 7.500)
+              Estimate  Std. Error   t value   Pr(>|t|)       95% confidence interval
+(Intercept)     3.0025      1.1245     2.670    0.02562 *    [  0.4587,   5.5462]
+x               0.4997      0.1179     4.239    0.00218 **   [  0.2331,   0.7664]
+Residual standard error: 1.236 on 9 degrees of freedom
+Multiple R-squared: 0.6663,  Adjusted R-squared: 0.6292
+F-statistic: 17.97 on 1 and 9 DF,  p-value: 0.00218
+Signif. codes: *** < 0.001, ** < 0.01, * < 0.05, . < 0.1
+
+Set IV: y = 3.0017 + 0.4999x   (n = 11, mean x = 9.000, mean y = 7.501)
+              Estimate  Std. Error   t value   Pr(>|t|)       95% confidence interval
+(Intercept)     3.0017      1.1239     2.671    0.02559 *    [  0.4592,   5.5442]
+x               0.4999      0.1178     4.243    0.00216 **   [  0.2334,   0.7664]
+Residual standard error: 1.236 on 9 degrees of freedom
+Multiple R-squared: 0.6667,  Adjusted R-squared: 0.6297
+F-statistic: 18.00 on 1 and 9 DF,  p-value: 0.00216
+Signif. codes: *** < 0.001, ** < 0.01, * < 0.05, . < 0.1
+
+Side by side
+Set          Mean x   Mean y    Intercept        Slope       Int SE     Slope SE        R^2
+Set I         9.000    7.501     3.000091     0.500091     1.124747     0.117906   0.666542
+Set II        9.000    7.501     3.000909     0.500000     1.125302     0.117964   0.666242
+Set III       9.000    7.500     3.002455     0.499727     1.124481     0.117878   0.666324
+Set IV        9.000    7.501     3.001727     0.499909     1.123921     0.117819   0.666707
+
+Go: 100000 reps x 4 sets in 0.541 s (1.35 microseconds per fit)
+Memory: 672 bytes and 6.0 allocations per fit; heap in use 4.34 MB; 17.1 MB obtained from OS
 
 Monte Carlo: 100000 samples of n = 100 from y = 3.0 + 0.5x + N(0, 1.24^2), seed 1
   mean slope 0.50012 (true 0.5), SD 0.04341, 95% CI coverage 95.0%
-  Go: 0.766 s total (7.66 microseconds per simulate + fit)
+  Go: 0.761 s total (7.61 microseconds per simulate + fit)

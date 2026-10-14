@@ -1,23 +1,23 @@
 File: anscombe (profile of: anscombe -reps 100000 -mc 100000)
-Build ID: 69f3828083f78657962fe7ff522d8f240478d3d4
+Build ID: 605b8b94dae355e38dff221f200da5f1e6fa8c32
 Type: cpu
-Time: 2026-10-13 20:20:33 CDT
-Duration: 1.21s, Total samples = 1140ms (94.08%)
-Showing nodes accounting for 830ms, 72.81% of 1140ms total
-Showing top 15 nodes out of 131
+Time: 2026-10-13 20:48:17 CDT
+Duration: 1.41s, Total samples = 1430ms (101.56%)
+Showing nodes accounting for 960ms, 67.13% of 1430ms total
+Showing top 15 nodes out of 141
       flat  flat%   sum%        cum   cum%
-      90ms  7.89%  7.89%      300ms 26.32%  github.com/montanaflynn/stats.LinearRegression
-      90ms  7.89% 15.79%       90ms  7.89%  runtime.madvise
-      80ms  7.02% 22.81%      580ms 50.88%  github.com/CHbobray/go-anscombe/anscombe.Fit
-      80ms  7.02% 29.82%       80ms  7.02%  github.com/montanaflynn/stats.Sum (inline)
-      70ms  6.14% 35.96%       70ms  6.14%  runtime.memclrNoHeapPointers
-      70ms  6.14% 42.11%       70ms  6.14%  runtime.osyield
-      60ms  5.26% 47.37%      220ms 19.30%  github.com/CHbobray/go-anscombe/anscombe.Synthetic
-      60ms  5.26% 52.63%      130ms 11.40%  github.com/montanaflynn/stats._variance
-      50ms  4.39% 57.02%       90ms  7.89%  math/rand.(*Rand).NormFloat64
-      50ms  4.39% 61.40%       50ms  4.39%  runtime.futex
-      30ms  2.63% 64.04%       30ms  2.63%  runtime.(*spanSet).push
-      30ms  2.63% 66.67%      170ms 14.91%  runtime.mallocgcSmallNoscan
-      30ms  2.63% 69.30%       30ms  2.63%  runtime.tgkill
-      20ms  1.75% 71.05%       40ms  3.51%  github.com/montanaflynn/stats.CovariancePopulation
-      20ms  1.75% 72.81%       20ms  1.75%  math.archExp
+     130ms  9.09%  9.09%      200ms 13.99%  github.com/montanaflynn/stats.LinearRegression
+     100ms  6.99% 16.08%      820ms 57.34%  github.com/CHbobray/go-anscombe/anscombe.Fit
+      80ms  5.59% 21.68%      110ms  7.69%  github.com/CHbobray/go-anscombe/anscombe.betaContinuedFraction
+      80ms  5.59% 27.27%       90ms  6.29%  github.com/montanaflynn/stats.CovariancePopulation
+      70ms  4.90% 32.17%       70ms  4.90%  math.archLog
+      70ms  4.90% 37.06%       70ms  4.90%  runtime.madvise
+      70ms  4.90% 41.96%       70ms  4.90%  runtime.osyield
+      60ms  4.20% 46.15%       60ms  4.20%  github.com/montanaflynn/stats.Sum (inline)
+      60ms  4.20% 50.35%       60ms  4.20%  runtime.tgkill
+      50ms  3.50% 53.85%      100ms  6.99%  github.com/montanaflynn/stats._variance
+      40ms  2.80% 56.64%      250ms 17.48%  github.com/CHbobray/go-anscombe/anscombe.regularizedIncompleteBeta
+      40ms  2.80% 59.44%       40ms  2.80%  math.archExp
+      40ms  2.80% 62.24%       40ms  2.80%  runtime.futex
+      40ms  2.80% 65.03%       40ms  2.80%  runtime.memclrNoHeapPointers
+      30ms  2.10% 67.13%      170ms 11.89%  github.com/CHbobray/go-anscombe/anscombe.Synthetic

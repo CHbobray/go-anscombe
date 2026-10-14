@@ -4,10 +4,10 @@ Set II       3.000909     0.500000     1.125302     0.117964   0.666242
 Set III      3.002455     0.499727     1.124481     0.117878   0.666324
 Set IV       3.001727     0.499909     1.123921     0.117819   0.666707
 
-Python statsmodels: 1000 reps x 4 sets in 17.514 s (4378.57 microseconds per fit)
-Python scipy linregress: 10000 reps x 4 sets in 18.006 s (450.15 microseconds per fit)
+Python statsmodels (Miller's code, with summary()): 1000 reps x 4 sets in 17.758 s (4439.45 microseconds per fit)
+Python scipy linregress: 10000 reps x 4 sets in 18.913 s (472.82 microseconds per fit)
 
 Monte Carlo: 100000 samples of n = 100 from y = 3.0 + 0.5x + N(0, 1.24^2)
   mean slope 0.50000 (true 0.5), SD 0.04334, 95% CI coverage 95.0%
-  Python: 50.557 s total (505.57 microseconds per simulate + fit)
-Memory: peak resident set size 143.7 MB
+  Python: 51.075 s total (510.75 microseconds per simulate + fit)
+Memory: peak resident set size 172.5 MB

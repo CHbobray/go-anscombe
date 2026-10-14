@@ -20,7 +20,15 @@ func TestRunQuartet(t *testing.T) {
 		t.Fatal(err)
 	}
 	got := out.String()
-	for _, want := range []string{"Set I ", "Set IV", "3.000091", "0.500091", "0.666542", "Go: 10 reps x 4 sets", "Memory:"} {
+	for _, want := range []string{
+		"Set I: y = 3.0001 + 0.5001x", // R-style summary block
+		"x               0.5001      0.1179     4.241    0.00217 **",
+		"Multiple R-squared: 0.6665,  Adjusted R-squared: 0.6295",
+		"F-statistic: 17.99 on 1 and 9 DF,  p-value: 0.00217",
+		"[  0.2334,   0.7668]", // 95% CI, as in statsmodels' summary
+		"Side by side", "Set IV", "0.666542",
+		"Go: 10 reps x 4 sets", "Memory:",
+	} {
 		if !strings.Contains(got, want) {
 			t.Errorf("output missing %q:\n%s", want, got)
 		}
@@ -33,8 +41,37 @@ func TestRunCSVMatchesBuiltInSet(t *testing.T) {
 	if err := run(&out, quiet, o); err != nil {
 		t.Fatal(err)
 	}
-	if !strings.Contains(out.String(), "CSV data       3.000091     0.500091") {
+	if !strings.Contains(out.String(), "CSV data      9.000    7.501     3.000091     0.500091") {
 		t.Errorf("CSV fit does not match Set I:\n%s", out.String())
+	}
+}
+
+func TestRunDuetWithPlot(t *testing.T) {
+	plot := filepath.Join(t.TempDir(), "duet.svg")
+	var out bytes.Buffer
+	if err := run(&out, quiet, options{dataName: "duet", svgPath: plot, mcSize: 100}); err != nil {
+		t.Fatal(err)
+	}
+	for _, want := range []string{"Duet A: y = 2.5177", "Duet B: y = 2.5215", "Plot written to"} {
+		if !strings.Contains(out.String(), want) {
+			t.Errorf("output missing %q:\n%s", want, out.String())
+		}
+	}
+	svg, err := os.ReadFile(plot)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.HasPrefix(string(svg), "<svg") || strings.Count(string(svg), "<circle") != 24 {
+		t.Errorf("plot is not an SVG with 24 points")
+	}
+}
+
+func TestStars(t *testing.T) {
+	cases := map[float64]string{0.0001: "***", 0.005: "**", 0.03: "*", 0.07: ".", 0.5: ""}
+	for p, want := range cases {
+		if got := stars(p); got != want {
+			t.Errorf("stars(%g) = %q, want %q", p, got, want)
+		}
 	}
 }
 
@@ -99,6 +136,7 @@ func TestParseFlagsRejectsBadInput(t *testing.T) {
 		"sample too small": {"-n", "2"},
 		"stray argument":   {"5000"},
 		"unknown flag":     {"-speed", "fast"},
+		"unknown data set": {"-data", "trio"},
 	}
 	for name, args := range cases {
 		t.Run(name, func(t *testing.T) {
@@ -107,7 +145,8 @@ func TestParseFlagsRejectsBadInput(t *testing.T) {
 			}
 		})
 	}
-	if o, err := parseFlags([]string{"-reps", "50", "-mc", "10", "-n", "20"}); err != nil || o.reps != 50 || o.mcRuns != 10 || o.mcSize != 20 {
+	o, err := parseFlags([]string{"-reps", "50", "-mc", "10", "-n", "20", "-data", "duet"})
+	if err != nil || o.reps != 50 || o.mcRuns != 10 || o.mcSize != 20 || o.dataName != "duet" {
 		t.Errorf("valid flags: got %+v, %v", o, err)
 	}
 }

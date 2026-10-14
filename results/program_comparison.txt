@@ -1,0 +1,6 @@
+Whole-program benchmark: 20 runs of each program (Linux x86_64)
+
+Program              Mean s     SD s    Min s   Peak MB
+Go                   0.0015   0.0001   0.0012      13.0
+Python (Miller)      2.1880   0.1091   1.9591     196.6
+R (Miller)           0.1871   0.0151   0.1721      58.4
