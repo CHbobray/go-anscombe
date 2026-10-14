@@ -5,12 +5,17 @@ program), then times repeated fits (statsmodels and the leaner
 scipy.stats.linregress) so the result can be compared with the Go
 and R programs. Plotting from the original program is omitted.
 
-Usage:  python3 python/anscombe_regression.py [reps]
+It also runs the same Monte Carlo benchmark as the Go program: draw many
+synthetic samples from y = 3 + 0.5x + N(0, 1.24^2), fit each, and report
+the mean slope, 95% confidence-interval coverage and time per run.
+
+Usage:  python3 python/anscombe_regression.py [reps] [monte_carlo_runs] [n]
 """
 
 import sys
 import time
 
+import numpy as np
 import pandas as pd
 from scipy import stats
 import statsmodels.formula.api as smf
@@ -37,8 +42,36 @@ SETS = {
 }
 
 
+MC_INTERCEPT, MC_SLOPE, MC_SIGMA = 3.0, 0.5, 1.24
+
+
+def monte_carlo(runs: int, n: int, seed: int = 1) -> None:
+    """Simulate `runs` samples of size n from a known line and fit each one."""
+    rng = np.random.default_rng(seed)
+    t_crit = stats.t.ppf(0.975, n - 2)
+    slopes = np.empty(runs)
+    covered = 0
+    start = time.perf_counter()
+    for i in range(runs):
+        x = 10 * rng.random(n)
+        y = MC_INTERCEPT + MC_SLOPE * x + MC_SIGMA * rng.standard_normal(n)
+        fit = stats.linregress(x, y)
+        slopes[i] = fit.slope
+        if abs(fit.slope - MC_SLOPE) <= t_crit * fit.stderr:
+            covered += 1
+    elapsed = time.perf_counter() - start
+    print(f"\nMonte Carlo: {runs} samples of n = {n} from y = {MC_INTERCEPT} + "
+          f"{MC_SLOPE}x + N(0, {MC_SIGMA}^2)")
+    print(f"  mean slope {slopes.mean():.5f} (true {MC_SLOPE}), SD {slopes.std():.5f}, "
+          f"95% CI coverage {100 * covered / runs:.1f}%")
+    print(f"  Python: {elapsed:.3f} s total ({elapsed / runs * 1e6:.2f} microseconds "
+          f"per simulate + fit)")
+
+
 def main() -> None:
     reps = int(sys.argv[1]) if len(sys.argv) > 1 else 1000
+    mc_runs = int(sys.argv[2]) if len(sys.argv) > 2 else 10000
+    mc_n = int(sys.argv[3]) if len(sys.argv) > 3 else 100
 
     print(f"{'Set':<8} {'Intercept':>12} {'Slope':>12} {'Int SE':>12} "
           f"{'Slope SE':>12} {'R^2':>10}")
@@ -67,6 +100,9 @@ def main() -> None:
     elapsed = time.perf_counter() - start
     print(f"Python scipy linregress: {lean_reps} reps x 4 sets in {elapsed:.3f} s "
           f"({elapsed / (lean_reps * 4) * 1e6:.2f} microseconds per fit)")
+
+    if mc_runs > 0:
+        monte_carlo(mc_runs, mc_n)
 
     try:  # resource is Unix-only; skip the memory line on Windows.
         import resource
