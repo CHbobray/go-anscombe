@@ -16,6 +16,16 @@
     --- PASS: TestFitMatchesR/Set_II (0.00s)
     --- PASS: TestFitMatchesR/Set_III (0.00s)
     --- PASS: TestFitMatchesR/Set_IV (0.00s)
+=== RUN   TestFitMatchesPython
+=== RUN   TestFitMatchesPython/Set_I
+=== RUN   TestFitMatchesPython/Set_II
+=== RUN   TestFitMatchesPython/Set_III
+=== RUN   TestFitMatchesPython/Set_IV
+--- PASS: TestFitMatchesPython (0.00s)
+    --- PASS: TestFitMatchesPython/Set_I (0.00s)
+    --- PASS: TestFitMatchesPython/Set_II (0.00s)
+    --- PASS: TestFitMatchesPython/Set_III (0.00s)
+    --- PASS: TestFitMatchesPython/Set_IV (0.00s)
 === RUN   TestQuartetLesson
 --- PASS: TestQuartetLesson (0.00s)
 === RUN   TestFitPerfectLine
@@ -46,7 +56,7 @@
 --- PASS: ExampleFit (0.00s)
 PASS
 coverage: 96.4% of statements
-ok  	github.com/CHbobray/go-anscombe/anscombe	0.014s	coverage: 96.4% of statements
+ok  	github.com/CHbobray/go-anscombe/anscombe	0.013s	coverage: 96.4% of statements
 === RUN   TestRunQuartet
 --- PASS: TestRunQuartet (0.00s)
 === RUN   TestRunCSVMatchesBuiltInSet
@@ -137,4 +147,4 @@ Options:
     --- PASS: TestRunRejectsBadFiles/constant_x (0.00s)
 PASS
 coverage: 86.6% of statements
-ok  	github.com/CHbobray/go-anscombe/cmd/anscombe	0.221s	coverage: 86.6% of statements
+ok  	github.com/CHbobray/go-anscombe/cmd/anscombe	0.222s	coverage: 86.6% of statements

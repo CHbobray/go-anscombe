@@ -9,7 +9,6 @@ import (
 
 // rReference holds summary(lm(y ~ x)) output from R 4.3.3 for each Anscombe
 // set, printed to 12 decimals (p-values to 12 significant digits).
-// Python statsmodels OLS gives the same values (see the python folder).
 var rReference = []Result{
 	{N: 11, DF: 9, MeanX: 9.000000000000, MeanY: 7.500909090909,
 		Intercept: 3.000090909091, InterceptSE: 1.124746790809, InterceptT: 2.667347827624, InterceptP: 0.0257340513992,
@@ -35,44 +34,85 @@ const tolerance = 1e-9
 
 func near(a, b float64) bool { return math.Abs(a-b) <= tolerance }
 
+// pythonReference holds Python statsmodels output for each Anscombe set,
+// from sm.OLS(y, sm.add_constant(x)).fit() as in Miller's (2015) Exhibit 1.1
+// (statsmodels 0.15.0), at full double precision.
+var pythonReference = []Result{
+	{N: 11, DF: 9, MeanX: 9.0, MeanY: 7.500909090909093,
+		Intercept: 3.0000909090909076, InterceptSE: 1.1247467908086437, InterceptT: 2.667347827624361, InterceptP: 0.025734051399162516,
+		Slope: 0.5000909090909093, SlopeSE: 0.1179055005956341, SlopeT: 4.2414552888928325, SlopeP: 0.002169628873078794,
+		ResidualSE: 1.236603322726321, RSquared: 0.666542459508775, AdjRSquared: 0.6294916216764166, FStatistic: 17.989942967676978, FPValue: 0.002169628873078794},
+	{N: 11, DF: 9, MeanX: 9.0, MeanY: 7.50090909090909,
+		Intercept: 3.0009090909090905, InterceptSE: 1.1253024162452268, InterceptT: 2.6667578844468864, InterceptP: 0.025758941030781045,
+		Slope: 0.5000000000000001, SlopeSE: 0.1179637459676408, SlopeT: 4.238590389772443, SlopeP: 0.0021788162369107984,
+		ResidualSE: 1.237214205341577, RSquared: 0.6662420337274844, AdjRSquared: 0.6291578152527604, FStatistic: 17.965648492271313, FPValue: 0.002178816236910797},
+	{N: 11, DF: 9, MeanX: 9.0, MeanY: 7.5,
+		Intercept: 3.0024545454545444, InterceptSE: 1.1244812296399933, InterceptT: 2.6700797366051106, InterceptP: 0.025619108839500856,
+		Slope: 0.4997272727272729, SlopeSE: 0.11787766222100225, SlopeT: 4.239372102496927, SlopeP: 0.002176305279228019,
+		ResidualSE: 1.2363113513899955, RSquared: 0.6663240410665594, AdjRSquared: 0.6292489345183994, FStatistic: 17.972275823429214, FPValue: 0.002176305279228019},
+	{N: 11, DF: 9, MeanX: 9.0, MeanY: 7.500909090909091,
+		Intercept: 3.0017272727272726, InterceptSE: 1.1239210718540582, InterceptT: 2.6707634084798513, InterceptP: 0.025590425200758583,
+		Slope: 0.4999090909090911, SlopeSE: 0.1178189417296855, SlopeT: 4.243028188591636, SlopeP: 0.002164602347197218,
+		ResidualSE: 1.2356954856813769, RSquared: 0.6667072568984653, AdjRSquared: 0.6296747298871836, FStatistic: 18.003288209183207, FPValue: 0.002164602347197222},
+}
+
+// pythonTolerance is tighter than tolerance because the Python values are
+// stored at full precision rather than rounded to 12 decimals.
+const pythonTolerance = 1e-11
+
 // TestFitMatchesR checks every reported statistic against R for all four sets.
 func TestFitMatchesR(t *testing.T) {
 	for i, ds := range Quartet() {
-		want := rReference[i]
 		t.Run(ds.Name, func(t *testing.T) {
-			got, err := Fit(ds.X, ds.Y)
-			if err != nil {
-				t.Fatalf("Fit returned error: %v", err)
-			}
-			if got.N != want.N || got.DF != want.DF {
-				t.Errorf("N, DF = %d, %d; want %d, %d", got.N, got.DF, want.N, want.DF)
-			}
-			checks := []struct {
-				name      string
-				got, want float64
-			}{
-				{"MeanX", got.MeanX, want.MeanX},
-				{"MeanY", got.MeanY, want.MeanY},
-				{"Intercept", got.Intercept, want.Intercept},
-				{"InterceptSE", got.InterceptSE, want.InterceptSE},
-				{"InterceptT", got.InterceptT, want.InterceptT},
-				{"InterceptP", got.InterceptP, want.InterceptP},
-				{"Slope", got.Slope, want.Slope},
-				{"SlopeSE", got.SlopeSE, want.SlopeSE},
-				{"SlopeT", got.SlopeT, want.SlopeT},
-				{"SlopeP", got.SlopeP, want.SlopeP},
-				{"ResidualSE", got.ResidualSE, want.ResidualSE},
-				{"RSquared", got.RSquared, want.RSquared},
-				{"AdjRSquared", got.AdjRSquared, want.AdjRSquared},
-				{"FStatistic", got.FStatistic, want.FStatistic},
-				{"FPValue", got.FPValue, want.FPValue},
-			}
-			for _, c := range checks {
-				if !near(c.got, c.want) {
-					t.Errorf("%s = %.12f, want %.12f (R)", c.name, c.got, c.want)
-				}
-			}
+			compareWithReference(t, ds, rReference[i], tolerance, "R lm()")
 		})
+	}
+}
+
+// TestFitMatchesPython checks every reported statistic against Python
+// statsmodels for all four sets.
+func TestFitMatchesPython(t *testing.T) {
+	for i, ds := range Quartet() {
+		t.Run(ds.Name, func(t *testing.T) {
+			compareWithReference(t, ds, pythonReference[i], pythonTolerance, "Python statsmodels")
+		})
+	}
+}
+
+// compareWithReference fits ds and checks each statistic against want.
+func compareWithReference(t *testing.T, ds DataSet, want Result, tol float64, source string) {
+	t.Helper()
+	got, err := Fit(ds.X, ds.Y)
+	if err != nil {
+		t.Fatalf("Fit returned error: %v", err)
+	}
+	if got.N != want.N || got.DF != want.DF {
+		t.Errorf("N, DF = %d, %d; want %d, %d", got.N, got.DF, want.N, want.DF)
+	}
+	checks := []struct {
+		name      string
+		got, want float64
+	}{
+		{"MeanX", got.MeanX, want.MeanX},
+		{"MeanY", got.MeanY, want.MeanY},
+		{"Intercept", got.Intercept, want.Intercept},
+		{"InterceptSE", got.InterceptSE, want.InterceptSE},
+		{"InterceptT", got.InterceptT, want.InterceptT},
+		{"InterceptP", got.InterceptP, want.InterceptP},
+		{"Slope", got.Slope, want.Slope},
+		{"SlopeSE", got.SlopeSE, want.SlopeSE},
+		{"SlopeT", got.SlopeT, want.SlopeT},
+		{"SlopeP", got.SlopeP, want.SlopeP},
+		{"ResidualSE", got.ResidualSE, want.ResidualSE},
+		{"RSquared", got.RSquared, want.RSquared},
+		{"AdjRSquared", got.AdjRSquared, want.AdjRSquared},
+		{"FStatistic", got.FStatistic, want.FStatistic},
+		{"FPValue", got.FPValue, want.FPValue},
+	}
+	for _, c := range checks {
+		if math.Abs(c.got-c.want) > tol {
+			t.Errorf("%s = %.15g, want %.15g (%s)", c.name, c.got, c.want, source)
+		}
 	}
 }
 

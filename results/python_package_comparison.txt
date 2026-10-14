@@ -1,0 +1,18 @@
+Coefficients for each set (intercept, slope):
+  statsmodels OLS, arrays (Miller) (3.000091, 0.500091)  (3.000909, 0.500000)  (3.002455, 0.499727)  (3.001727, 0.499909)
+  statsmodels formula (Patsy)      (3.000091, 0.500091)  (3.000909, 0.500000)  (3.002455, 0.499727)  (3.001727, 0.499909)
+  NumPy polyfit                    (3.000091, 0.500091)  (3.000909, 0.500000)  (3.002455, 0.499727)  (3.001727, 0.499909)
+  NumPy linalg.lstsq               (3.000091, 0.500091)  (3.000909, 0.500000)  (3.002455, 0.499727)  (3.001727, 0.499909)
+  SciPy stats.linregress           (3.000091, 0.500091)  (3.000909, 0.500000)  (3.002455, 0.499727)  (3.001727, 0.499909)
+  scikit-learn LinearRegression    (3.000091, 0.500091)  (3.000909, 0.500000)  (3.002455, 0.499727)  (3.001727, 0.499909)
+
+| Package                          | Max diff from R | µs per fit | Other statistics provided |
+|----------------------------------|----------------:|-----------:|---------------------------|
+| statsmodels OLS, arrays (Miller) |         4.6e-13 |     1264.4 | SEs, t, p-values, R², F, CIs, full summary() |
+| statsmodels formula (Patsy)      |         4.6e-13 |     4926.0 | SEs, t, p-values, R², F, CIs, full summary() |
+| NumPy polyfit                    |         4.6e-13 |      112.9 | coefficients only |
+| NumPy linalg.lstsq               |         4.6e-13 |       90.8 | coefficients and residual sum of squares |
+| SciPy stats.linregress           |         4.6e-13 |      650.2 | slope SE, intercept SE, r, p-value for slope |
+| scikit-learn LinearRegression    |         4.6e-13 |     1805.5 | coefficients and R² (via score()); no SEs or p-values |
+
+2000 reps x 4 sets per package. R values are rounded to 12 decimals, so differences below 1e-12 mean exact agreement.

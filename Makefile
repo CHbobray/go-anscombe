@@ -1,6 +1,6 @@
 # Common tasks. On Windows without make, run the go commands directly (see README).
 
-.PHONY: test bench run plots build app compare programs miller profile clean
+.PHONY: test bench run plots build app compare programs packages miller profile clean
 
 test:
 	go vet ./...
@@ -43,6 +43,10 @@ compare:
 # Time Miller's complete Python and R programs against the Go program.
 programs: build
 	python3 benchmark/compare_programs.py 20
+
+# Compare six Python regression approaches (statsmodels, Patsy, NumPy, SciPy, scikit-learn).
+packages:
+	python3 python/package_comparison.py 2000
 
 # Run Miller's (2015) original chapter 1 programs, unchanged (plots included).
 # Note: the Python original's savefig() call fails on matplotlib 3.8 and later.

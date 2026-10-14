@@ -6,12 +6,26 @@ This repository answers a management question: can Go, using the [`github.com/mo
 
 **Short answer:** Go reproduces R's `summary(lm())` and Python's statsmodels output (coefficients, standard errors, t values, p-values, R², F test) to at least nine decimal places. It runs Miller's whole chapter 1 analysis in 1.5 milliseconds and 13 MB of memory, compared with 0.19 s and 58 MB for R and 2.2 s and 197 MB for Python. It is a sound choice for statistics inside backend services and for heavy simulation. It is not yet a full replacement for R or Python for exploratory data science. See the [recommendation](#recommendation-to-management).
 
+## The management problem
+
+The company's managers want software engineers and data scientists to share one language, Go, for both backend research and product development. Go clearly suits the company's web servers, databases and cloud services. The data scientists are less sure: at the very least, they want proof that a Go statistics package gives correct answers. The package under consideration is [`montanaflynn/stats`](https://pkg.go.dev/github.com/montanaflynn/stats), which as of June 19, 2023 had 28 contributors and more than 15 thousand users.
+
+Taking the role of the data scientists, this project:
+
+1. fits simple linear regressions to the Anscombe Quartet (Anscombe 1973; Miller 2015) with the Go stats package;
+2. uses Go's `testing` package to check the Go results against R and Python, statistic by statistic;
+3. compares the Python packages a data scientist might use (statsmodels with and without Patsy formulas, NumPy, SciPy and scikit-learn), because the assignment notes they may differ;
+4. measures execution time and memory for Go, Python and R, using both Go's `testing` benchmarks and complete-program runs; and
+5. makes a recommendation to management.
+
 ## Contents
 
+- [The management problem](#the-management-problem)
 - [Assignment deliverables](#assignment-deliverables)
 - [Repository layout](#repository-layout)
 - [The data](#the-data)
 - [Results: Go matches R and Python](#results-go-matches-r-and-python)
+- [Do Python packages differ?](#do-python-packages-differ)
 - [Execution time and memory](#execution-time-and-memory)
 - [Recommendation to management](#recommendation-to-management)
 - [How to run the application](#how-to-run-the-application)
@@ -49,6 +63,7 @@ This repository answers a management question: can Go, using the [`github.com/mo
 | `python/miller-mtpa-chapter-1-program.py` | Miller (2015) Exhibit 1.1, exactly as provided for the course |
 | `python/miller_anscombe.py` | The same program with only the matplotlib plotting removed. This is the program timed against Go |
 | `python/anscombe_benchmark.py` | Times Miller's statsmodels code and `scipy.stats.linregress`, and runs the Monte Carlo benchmark |
+| `python/package_comparison.py` | Fits the quartet with six Python approaches (statsmodels arrays, statsmodels with Patsy formulas, NumPy `polyfit` and `lstsq`, SciPy, scikit-learn) and compares results, statistics provided and speed |
 | `r/miller-mtpa-chapter-1-program.R` | Miller (2015) Exhibit 1.2, exactly as provided for the course |
 | `r/miller_anscombe.R` | The same program with only the plotting removed. This is the program timed against Go |
 | `r/anscombe_benchmark.R` | Times Miller's `lm()` code and `.lm.fit()`, and runs the Monte Carlo benchmark |
@@ -68,6 +83,7 @@ Files in `results/`:
 | `go_cpu_profile.txt`, `go_memory_profile.txt` | Top functions from the Go CPU and memory profiles (`pprof`) |
 | `program_comparison.txt` | Whole-program wall time and peak memory, Go vs Miller's Python and R |
 | `python_output.txt`, `r_output.txt` | Python and R benchmark output |
+| `python_package_comparison.txt` | Results of the Python package comparison |
 | `miller_python_original_output.txt`, `miller_r_original_output.txt` | Output of Miller's original programs, unchanged |
 | `anscombe_quartet.svg`, `duet.svg` | Plots drawn by the Go application |
 
@@ -114,13 +130,40 @@ All three languages give these estimates for the four sets:
 | III | 3.002455 | 0.499727 | 1.124481 | 0.117878 | 0.666324 |
 | IV | 3.001727 | 0.499909 | 1.123921 | 0.117819 | 0.666707 |
 
-`TestFitMatchesR` compares every statistic for every set against R printed to 12 decimals, and requires agreement within 1e-9. All of them pass.
+Two Go tests prove the match, statistic by statistic, for all 15 statistics and all four sets:
+
+- `TestFitMatchesR` compares against R's `summary(lm())`, printed to 12 decimals, and requires agreement within 1e-9.
+- `TestFitMatchesPython` compares against Python statsmodels (Miller's `sm.OLS(y, sm.add_constant(x))`) at full double precision, and requires agreement within 1e-11.
+
+Both pass.
 
 **How the Go regression works.** `stats.LinearRegression` returns fitted points rather than coefficients, so `Fit` recovers the slope and intercept from two fitted points with different x values. R² comes from `stats.Correlation`, and the standard errors use the textbook OLS formulas with `stats.Mean` and `stats.PopulationVariance`. The stats package has no t distribution, so `tdist.go` computes p-values from the regularized incomplete beta function, which is tested against R's `pt()` and `qt()`. Bad input returns an error instead of a wrong answer: unequal lengths, fewer than three points, or a constant x (where the slope is undefined).
 
+## Do Python packages differ?
+
+The assignment warns that Python results may depend on the package: statsmodels with Patsy formulas, NumPy or SciPy used directly, or scikit-learn. `python/package_comparison.py` fits the quartet six ways and compares each with R:
+
+| Python approach | Largest coefficient difference from R | Time per fit | Statistics reported besides the coefficients |
+|---|---|---|---|
+| statsmodels `OLS` with `add_constant` (Miller's code) | 4.6e-13 | 1,264 µs | SEs, t, p-values, R², F, confidence intervals, full `summary()` |
+| statsmodels formula `ols("y ~ x")` (parsed by Patsy) | 4.6e-13 | 4,926 µs | Same as above |
+| NumPy `polyfit` | 4.6e-13 | 113 µs | None |
+| NumPy `linalg.lstsq` | 4.6e-13 | 91 µs | Residual sum of squares |
+| SciPy `stats.linregress` | 4.6e-13 | 650 µs | Slope and intercept SEs, r, p-value for the slope |
+| scikit-learn `LinearRegression` | 4.6e-13 | 1,806 µs | R² (through `score()`); no SEs or p-values |
+
+Differences below 1e-12 mean exact agreement, because the R values are rounded to 12 decimals. Full output: `results/python_package_comparison.txt`.
+
+**What this shows.** On the coefficients, the packages do not differ: all six agree with R and with Go. They differ in two other ways:
+
+- **What they report.** Only statsmodels gives the full inference a data scientist expects from R (standard errors, t values, p-values, F test). NumPy and scikit-learn give the fitted line only. In this respect the Go stats package is like NumPy: this project had to add the inference itself.
+- **Speed.** The Patsy formula interface costs about four times as much as passing arrays to the same statsmodels routine, and both are far slower than NumPy's bare routines. Go, at about 1.2 µs per fit with full inference, is faster than all of them.
+
 ## Execution time and memory
 
-Test machine: 2-core Intel Xeon, Linux; Go 1.24.7; Python 3.13.16 with numpy 2.5.3, pandas 3.0.5, scipy 1.18.1, statsmodels 0.15.0; R 4.3.3. Raw output is in `results/`. Timings vary from run to run and machine to machine, so treat the ratios as more meaningful than the exact numbers.
+Execution times are measured three ways. Go's `testing` package benchmarks the Go regression (`go test -bench`). Each language's programs time their own regression loops. And complete programs are timed from outside, which captures start-up and package loading as a user would experience them. The testing approach follows Bates and LaNou (2023) and Bodner (2024).
+
+Test machine: 2-core Intel Xeon, Linux; Go 1.24.7; Python 3.13.16 with numpy 2.5.3, pandas 3.0.5, scipy 1.18.1, statsmodels 0.15.0, patsy 1.0.3, scikit-learn 1.9.1; R 4.3.3. Raw output is in `results/`. Timings vary from run to run and machine to machine, so treat the ratios as more meaningful than the exact numbers.
 
 ### 1. Whole programs: Miller's Python and R versus Go
 
@@ -177,8 +220,9 @@ Reasons Go is a good fit:
 
 Concerns data scientists will reasonably raise:
 
+- **Missing inference.** The Go package returns fitted values, much like NumPy or scikit-learn, but none of the standard errors, t values, p-values or F tests that R's `summary(lm())` and statsmodels print. Data scientists judge a model by those numbers. Here they had to be written and tested by hand (`regression.go`, `tdist.go`).
 - **Limited library.** `montanaflynn/stats` covers descriptive statistics, correlation and simple regression only. It has no multiple regression, standard errors, p-values, t or F distributions, GLMs, mixed models or time series. This project had to write the standard errors, the t distribution and the plotting itself, all of which are one line in R. [Gonum](https://www.gonum.org/) adds matrix algebra and more distributions, but still falls far short of R or Python's ecosystems.
-- **Small community.** As of June 2023 the stats package had 28 contributors and about 15,000 users, compared with the huge user bases, textbooks and Stack Overflow history behind R and Python.
+- **Small community.** As of June 19, 2023 the stats package had 28 contributors and more than 15 thousand users, compared with the huge user bases, textbooks and Stack Overflow history behind R and Python.
 - **No interactive workflow.** There is no mature notebook culture, no equivalent of ggplot2 or matplotlib, and no data frame as convenient as pandas or R's. That is the exact gap the Anscombe Quartet warns about, since analysts need to plot data before trusting a regression.
 - **Verbosity.** Work that is one line in R (`summary(lm(y ~ x))`) takes functions, error handling and tests in Go.
 - **Hiring and training.** Most data scientists know Python or R, not Go.
@@ -262,6 +306,7 @@ make profile    # log plus CPU and memory profiles, then the top CPU users
 make programs   # whole-program time and memory, Go vs Miller's Python and R
 make compare    # regression timing and Monte Carlo benchmark in all three languages
 make miller     # run Miller's original programs unchanged
+make packages   # compare six Python regression approaches
 make build      # rebuild every executable into bin/
 make app        # rebuild bin/Anscombe-macOS.zip
 ```
@@ -277,7 +322,7 @@ $env:GOOS="windows"; $env:GOARCH="amd64"; go build -o bin/anscombe-windows-amd64
 Python needs Python 3 and these packages (matplotlib is used only by Miller's original program):
 
 ```bash
-pip install numpy pandas scipy statsmodels matplotlib
+pip install numpy pandas scipy statsmodels patsy scikit-learn matplotlib
 ```
 
 R needs only base R.
@@ -288,6 +333,7 @@ Rscript r/miller_anscombe.R                     # Miller's Exhibit 1.2 without p
 python3 python/anscombe_benchmark.py 1000 100000   # args: reps, Monte Carlo runs, [n]
 Rscript r/anscombe_benchmark.R 10000 100000        # args: reps, Monte Carlo runs, [n]
 python3 benchmark/compare_programs.py 20           # whole-program comparison with Go
+python3 python/package_comparison.py 2000          # compare six Python regression approaches
 ```
 
 Miller's original programs are included unchanged (`make miller` runs them from their own folders, where they write their plot PDFs). The R original runs as published. The Python original fits and prints all four regressions correctly, then stops at its final `plt.savefig()` call, because recent matplotlib versions (3.11 was tested here) no longer accept its `papertype` and `frameon` arguments. As the assignment notes, the plotting is not critical to the test, which is why the timed versions remove it. The Go application draws the equivalent plots with `-svg`.
@@ -297,6 +343,7 @@ Miller's original programs are included unchanged (`make miller` runs them from 
 | Test | Checks |
 |---|---|
 | `TestFitMatchesR` | Every statistic (coefficients, SEs, t values, p-values, R², adjusted R², F, residual SE) for all four sets, within 1e-9 of R |
+| `TestFitMatchesPython` | The same 15 statistics for all four sets, within 1e-11 of Python statsmodels |
 | `TestQuartetLesson` | Every set gives about ŷ = 3.00 + 0.500x and R² = 0.67 |
 | `TestFitPerfectLine` | Exact answer for y = 1 + 2x |
 | `TestFitErrors` | Unequal lengths, too few points, empty input, constant x |
@@ -318,6 +365,10 @@ Coverage: 96.4% of the `anscombe` package and 86.6% of the application. The unco
 ## References
 
 Anscombe, F. J. 1973, February. Graphs in statistical analysis. *The American Statistician* 27: 17–21.
+
+Bates, M., and C. LaNou. 2023. *Go Fundamentals: Gopher Guides.* Boston: Addison-Wesley.
+
+Bodner, J. 2024. *Learning Go: An Idiomatic Approach to Real-World Go Programming* (second ed.). Sebastopol, Calif.: O'Reilly.
 
 Flynn, M. n.d. stats: A well tested and comprehensive Golang statistics library. GitHub repository. https://github.com/montanaflynn/stats.
 
