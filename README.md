@@ -146,7 +146,7 @@ Each program fits all four sets repeatedly and reports the time per fit. "Miller
 | Python `scipy.stats.linregress` (lean) | 40,000 | 473 µs | |
 | Python statsmodels `OLS().fit().summary()` (Miller's code) | 4,000 | 4,439 µs | 173 MB peak resident memory (whole benchmark run) |
 
-Against Miller's code, Go is about 500 times faster than R and 3,500 times faster than Python. Against R's lean `.lm.fit()`, which computes only coefficients, Go is still about 2.5 times faster while also computing standard errors and p-values. Go's own benchmarks (`results/go_benchmarks.txt`) agree: 1.1–1.3 µs and 672 bytes per Anscombe fit. On larger synthetic samples, time grows linearly with sample size: 4.5 µs at n = 100, 45 µs at n = 1,000 and 0.48 ms at n = 10,000.
+Against Miller's code, Go is about 500 times faster than R and 3,500 times faster than Python. Against R's lean `.lm.fit()`, which computes only coefficients, Go is still about 2.5 times faster while also computing standard errors and p-values. Go's own benchmarks (`results/go_benchmarks.txt`) agree: 1.1–1.3 µs and 672 bytes per Anscombe fit. On larger synthetic samples, time grows linearly with sample size: about 5 µs at n = 100, 50 µs at n = 1,000 and 0.5 ms at n = 10,000.
 
 ### 3. Monte Carlo benchmark
 
